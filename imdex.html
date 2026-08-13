@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Premium Birthday Jigsaw</title>
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+
+body{
+  min-height:100vh;
+  background:
+    radial-gradient(circle at 20% 10%,#54245f 0,transparent 35%),
+    radial-gradient(circle at 90% 80%,#3d174c 0,transparent 35%),
+    #050308;
+  color:#fff;
+  font-family:Arial,sans-serif;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  overflow:hidden;
+}
+
+.container{
+  width:min(92vw,430px);
+  text-align:center;
+}
+
+.badge{
+  display:inline-block;
+  padding:7px 15px;
+  border:1px solid #ffffff30;
+  border-radius:30px;
+  background:#ffffff0d;
+  color:#e9c9ff;
+  font-size:11px;
+  letter-spacing:2px;
+  margin-bottom:14px;
+}
+
+h1{
+  font-size:30px;
+  letter-spacing:.5px;
+  margin-bottom:8px;
+}
+
+.subtitle{
+  color:#cbb8d5;
+  font-size:14px;
+  margin-bottom:22px;
+}
+
+.puzzle{
+  width:min(88vw,340px);
+  aspect-ratio:1;
+  margin:auto;
+  padding:6px;
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:5px;
+  border-radius:24px;
+  background:#ffffff10;
+  border:1px solid #ffffff25;
+  box-shadow:
+    0 20px 70px #000,
+    0 0 35px #d85bff25;
+}
+
+.piece{
+  position:relative;
+  overflow:hidden;
+  border-radius:12px;
+  cursor:pointer;
+  background-image:url("photoo1.jpg");
+  background-repeat:no-repeat;
+  transition:.25s;
+  border:1px solid #ffffff18;
+}
+
+.piece::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:linear-gradient(
+    135deg,
+    #ffffff20,
+    transparent 40%,
+    #00000020
+  );
+  pointer-events:none;
+}
+
+.piece.selected{
+  transform:scale(.94);
+  border:3px solid #fff;
+  box-shadow:0 0 25px #fff;
+  z-index:2;
+}
+
+.status{
+  margin-top:18px;
+  color:#e7d8ed;
+  font-size:14px;
+}
+
+button{
+  margin-top:18px;
+  padding:12px 24px;
+  border:1px solid #ffffff25;
+  border-radius:30px;
+  color:#fff;
+  background:linear-gradient(90deg,#b94cff,#ff59bd);
+  font-weight:bold;
+  box-shadow:0 10px 30px #b53cff35;
+  cursor:pointer;
+}
+
+#giftScreen{
+  display:none;
+}
+
+.gift{
+  width:150px;
+  height:150px;
+  margin:30px auto 15px;
+  border-radius:35px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:90px;
+  cursor:pointer;
+  background:
+    linear-gradient(145deg,#ffffff18,#ffffff05);
+  border:1px solid #ffffff25;
+  box-shadow:
+    0 25px 70px #000,
+    0 0 50px #ff4fbd30;
+  animation:float 2s infinite ease-in-out;
+}
+
+.message{
+  display:none;
+  margin-top:22px;
+  padding:24px;
+  border-radius:24px;
+  background:#ffffff0c;
+  border:1px solid #ffffff20;
+  backdrop-filter:blur(18px);
+}
+
+.message h2{
+  color:#ff9cdb;
+  margin-bottom:12px;
+}
+
+.message p{
+  color:#e8dfe9;
+  line-height:1.7;
+  font-size:14px;
+}
+
+.heart{
+  position:fixed;
+  bottom:-30px;
+  pointer-events:none;
+  animation:rise linear forwards;
+}
+
+@keyframes float{
+  50%{transform:translateY(-12px) scale(1.03)}
+}
+
+@keyframes rise{
+  to{
+    transform:translateY(-110vh) rotate(360deg);
+    opacity:0;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<section id="game">
+
+  <div class="badge">A LITTLE BIRTHDAY GAME</div>
+
+  <h1>🧩 Piece by Piece</h1>
+
+  <p class="subtitle">
+    Complete the memory to unlock your surprise ✨
+  </p>
+
+  <div class="puzzle" id="puzzle"></div>
+
+  <div class="status" id="status">
+    Tap two pieces to swap 💕
+  </div>
+
+  <button onclick="shuffle()">↻ SHUFFLE</button>
+
+</section>
+
+
+<section id="giftScreen">
+
+  <div class="badge">SECRET UNLOCKED</div>
+
+  <h1>🎉 You Did It!</h1>
+
+  <p class="subtitle">
+    Your little surprise is waiting...
+  </p>
+
+  <div class="gift" onclick="openGift()">
+    🎁
+  </div>
+
+  <p style="color:#d8c6df">
+    Tap the gift to open
+  </p>
+
+  <div class="message" id="message">
+
+    <h2>🎂 Advance Happy Birthday ❤️</h2>
+
+    <p>
+      A little puzzle, a little surprise,
+      and a whole lot of happiness. ✨
+    </p>
+
+    <p style="margin-top:12px">
+      May your birthday bring beautiful
+      memories, endless smiles and
+      everything your heart wishes for. 💖
+    </p>
+
+  </div>
+
+</section>
+
+</div>
+
+
+<script>
+
+/*
+  YOUR PHOTO:
+  Keep photoo1.jpg in the same folder
+  as this index.html
+*/
+
+const correct=[
+  0,1,2,
+  3,4,5,
+  6,7,8
+];
+
+let pieces=[...correct];
+let selected=null;
+
+const puzzle=document.getElementById("puzzle");
+
+function createPuzzle(){
+
+  puzzle.innerHTML="";
+
+  pieces.forEach((number,index)=>{
+
+    const piece=document.createElement("div");
+
+    piece.className="piece";
+
+    /*
+      3x3 photo positioning
+    */
+
+    const row=Math.floor(number/3);
+    const col=number%3;
+
+    piece.style.backgroundSize="300% 300%";
+
+    piece.style.backgroundPosition=
+      `${col*50}% ${row*50}%`;
+
+    piece.dataset.index=index;
+
+    piece.onclick=()=>{
+      selectPiece(piece);
+    };
+
+    puzzle.appendChild(piece);
+
+  });
+
+}
+
+function selectPiece(piece){
+
+  if(!selected){
+
+    selected=piece;
+    piece.classList.add("selected");
+
+    document.getElementById("status")
+      .textContent="Now choose another piece ✨";
+
+    return;
+  }
+
+  if(selected===piece){
+
+    piece.classList.remove("selected");
+    selected=null;
+
+    return;
+  }
+
+  const a=Number(selected.dataset.index);
+  const b=Number(piece.dataset.index);
+
+  [pieces[a],pieces[b]]=
+  [pieces[b],pieces[a]];
+
+  selected=null;
+
+  createPuzzle();
+
+  checkComplete();
+
+}
+
+function shuffle(){
+
+  do{
+
+    pieces.sort(()=>Math.random()-.5);
+
+  }while(isComplete());
+
+  selected=null;
+
+  createPuzzle();
+
+  document.getElementById("status")
+    .textContent="Tap two pieces to swap 💕";
+
+}
+
+function isComplete(){
+
+  return pieces.every(
+    (value,index)=>value===correct[index]
+  );
+
+}
+
+function checkComplete(){
+
+  if(!isComplete()) return;
+
+  document.getElementById("game")
+    .style.display="none";
+
+  document.getElementById("giftScreen")
+    .style.display="block";
+
+  hearts(30);
+
+}
+
+function openGift(){
+
+  document.querySelector(".gift")
+    .textContent="💝";
+
+  document.getElementById("message")
+    .style.display="block";
+
+  hearts(45);
+
+}
+
+function hearts(count){
+
+  for(let i=0;i<count;i++){
+
+    const h=document.createElement("div");
+
+    h.className="heart";
+
+    h.textContent=
+      ["❤️","💖","💕","✨","💗"]
+      [Math.floor(Math.random()*5)];
+
+    h.style.left=
+      Math.random()*100+"vw";
+
+    h.style.fontSize=
+      (14+Math.random()*20)+"px";
+
+    h.style.animationDuration=
+      (3+Math.random()*4)+"s";
+
+    document.body.appendChild(h);
+
+    setTimeout(()=>h.remove(),7500);
+
+  }
+
+}
+
+createPuzzle();
+
+</script>
+
+</body>
+  </html>

@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Advance Birthday — Real Jigsaw</title>
+
+<style>
+*{
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+}
+
+body{
+  min-height:100vh;
+  overflow:hidden;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  background:
+    radial-gradient(circle at 20% 10%,#592765,transparent 35%),
+    radial-gradient(circle at 90% 90%,#351443,transparent 35%),
+    #050308;
+  color:#fff;
+  font-family:Arial,sans-serif;
+}
+
+.container{
+  width:min(92vw,430px);
+  text-align:center;
+}
+
+.badge{
+  display:inline-block;
+  padding:7px 16px;
+  border:1px solid #ffffff25;
+  border-radius:30px;
+  background:#ffffff0b;
+  color:#e9c9f6;
+  font-size:10px;
+  letter-spacing:2px;
+  margin-bottom:14px;
+}
+
+h1{
+  font-size:30px;
+  margin-bottom:8px;
+}
+
+.subtitle{
+  color:#cdbbd5;
+  font-size:14px;
+  margin-bottom:22px;
+}
+
+.loading{
+  padding:25px;
+  color:#e5c9ef;
+}
+
+.error{
+  display:none;
+  padding:22px;
+  color:#ffabc7;
+  line-height:1.7;
+}
+
+/* REAL JIGSAW BOARD */
+
+.puzzle{
+  width:min(88vw,340px);
+  aspect-ratio:1;
+  margin:auto;
+  position:relative;
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  grid-template-rows:repeat(3,1fr);
+  padding:8px;
+  border-radius:24px;
+  background:#ffffff0b;
+  border:1px solid #ffffff25;
+  box-shadow:
+    0 25px 70px #000,
+    0 0 45px #d55cff25;
+}
+
+/* Each piece */
+
+.piece{
+  --tab:20%;
+
+  position:relative;
+  width:100%;
+  height:100%;
+  cursor:pointer;
+  user-select:none;
+  touch-action:manipulation;
+
+  background-image:var(--photo);
+  background-size:300% 300%;
+  background-position:var(--pos);
+
+  clip-path:var(--shape);
+
+  filter:
+    drop-shadow(0 3px 3px #000)
+    drop-shadow(0 0 2px #ffffff55);
+
+  transition:
+    transform .22s ease,
+    filter .22s ease;
+  z-index:1;
+}
+
+.piece::after{
+  content:"";
+  position:absolute;
+  inset:5%;
+  background:
+    linear-gradient(
+      135deg,
+      #ffffff30,
+      transparent 35%,
+      transparent 70%,
+      #00000035
+    );
+  pointer-events:none;
+  clip-path:var(--shape);
+}
+
+.piece.selected{
+  transform:scale(.91);
+  filter:
+    drop-shadow(0 0 5px #fff)
+    drop-shadow(0 0 15px #ff58c8)
+    drop-shadow(0 0 30px #ff58c855);
+  z-index:20;
+}
+
+/* Golden border illusion */
+
+.piece{
+  outline:1px solid #ffffff55;
+}
+
+/* Correct completed puzzle */
+
+.puzzle.complete .piece{
+  filter:
+    drop-shadow(0 0 5px #fff)
+    drop-shadow(0 0 12px #ff9cdb);
+}
+
+.status{
+  margin-top:17px;
+  color:#eadced;
+  font-size:14px;
+}
+
+button{
+  margin-top:18px;
+  padding:12px 25px;
+  border:0;
+  border-radius:30px;
+  color:#fff;
+  font-weight:bold;
+  background:linear-gradient(90deg,#a746ff,#ff58b9);
+  box-shadow:0 10px 30px #a746ff35;
+  cursor:pointer;
+}
+
+#giftScreen{
+  display:none;
+}
+
+.gift{
+  width:155px;
+  height:155px;
+  margin:30px auto 16px;
+  border-radius:35px;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  font-size:90px;
+  background:#ffffff0b;
+  border:1px solid #ffffff25;
+  box-shadow:
+    0 25px 70px #000,
+    0 0 50px #ff55c830;
+  cursor:pointer;
+  animation:float 2s infinite ease-in-out;
+}
+
+.message{
+  display:none;
+  margin-top:22px;
+  padding:24px;
+  border-radius:24px;
+  background:#ffffff0d;
+  border:1px solid #ffffff20;
+  backdrop-filter:blur(18px);
+}
+
+.message h2{
+  color:#ff9cdb;
+  margin-bottom:12px;
+}
+
+.message p{
+  color:#e9dfe9;
+  font-size:14px;
+  line-height:1.7;
+}
+
+.heart{
+  position:fixed;
+  bottom:-30px;
+  pointer-events:none;
+  animation:rise linear forwards;
+}
+
+@keyframes float{
+  50%{
+    transform:translateY(-12px) scale(1.03);
+  }
+}
+
+@keyframes rise{
+  to{
+    transform:translateY(-110vh) rotate(360deg);
+    opacity:0;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<section id="game">
+
+<div class="badge">A LITTLE BIRTHDAY GAME</div>
+
+<h1>🧩 Piece by Piece</h1>
+
+<p class="subtitle">
+Complete the memory to unlock your surprise ✨
+</p>
+
+<div id="loading" class="loading">
+✨ Loading your memory...
+</div>
+
+<div id="error" class="error">
+😔 Photo load ஆகவில்லை.<br><br>
+Check that the filename is exactly:<br>
+<b>photo01.jpg</b><br><br>
+and that it is in the same folder as
+<b>index.html</b>.
+</div>
+
+<div id="puzzle" class="puzzle" style="display:none"></div>
+
+<div id="status" class="status" style="display:none">
+Tap two pieces to swap 💕
+</div>
+
+<button id="shuffleBtn"
+onclick="shufflePuzzle()"
+style="display:none">
+↻ SHUFFLE
+</button>
+
+</section>
+
+
+<section id="giftScreen">
+
+<div class="badge">SECRET UNLOCKED</div>
+
+<h1>🎉 You Did It!</h1>
+
+<p class="subtitle">
+Your little surprise is waiting...
+</p>
+
+<div class="gift" onclick="openGift()">
+🎁
+</div>
+
+<p style="color:#d9c6df">
+Tap the gift to open
+</p>
+
+<div class="message" id="message">
+
+<h2>🎂 Advance Happy Birthday ❤️</h2>
+
+<p>
+A little puzzle, a little surprise,
+and a whole lot of happiness. ✨
+</p>
+
+<p style="margin-top:12px">
+May your birthday bring beautiful
+memories, endless smiles and
+everything your heart wishes for. 💖
+</p>
+
+</div>
+
+</section>
+
+</div>
+
+
+<script>
+
+const PHOTO_PATH = "photo01.jpg";
+
+let pieces = [];
+let selected = null;
+
+const puzzle =
+document.getElementById("puzzle");
+
+const loading =
+document.getElementById("loading");
+
+const errorBox =
+document.getElementById("error");
+
+const statusText =
+document.getElementById("status");
+
+const shuffleBtn =
+document.getElementById("shuffleBtn");
+
+
+/* =========================================
+   REAL JIGSAW SHAPE
+   ========================================= */
+
+const shapes = [
+
+/* 0 — TOP LEFT */
+"polygon(
+0 0,
+65% 0,
+65% 18%,
+72% 18%,
+76% 14%,
+82% 14%,
+88% 18%,
+90% 24%,
+88% 30%,
+82% 34%,
+76% 34%,
+72% 30%,
+65% 30%,
+65% 100%,
+0 100%
+)",
+
+/* 1 — TOP MIDDLE */
+"polygon(
+0 0,
+30% 0,
+30% 7%,
+24% 10%,
+22% 17%,
+25% 23%,
+31% 26%,
+37% 23%,
+41% 18%,
+42% 12%,
+47% 8%,
+53% 8%,
+58% 12%,
+59% 18%,
+63% 23%,
+69% 26%,
+75% 23%,
+78% 17%,
+76% 10%,
+70% 7%,
+70% 0,
+100% 0,
+100% 100%,
+70% 100%,
+70% 91%,
+65% 87%,
+59% 88%,
+54% 94%,
+48% 96%,
+42% 94%,
+38% 88%,
+32% 87%,
+27% 91%,
+27% 100%,
+0 100%
+)",
+
+/* 2 — TOP RIGHT */
+"polygon(
+0 0,
+100% 0,
+100% 100%,
+35% 100%,
+35% 82%,
+29% 82%,
+24% 86%,
+18% 86%,
+12% 82%,
+10% 76%,
+12% 70%,
+18% 66%,
+24% 66%,
+29% 70%,
+35% 70%,
+35% 0
+)",
+
+/* 3 — MIDDLE LEFT */
+"polygon(
+0 0,
+65% 0,
+65% 30%,
+73% 30%,
+78% 25%,
+84% 23%,
+90% 26%,
+94% 32%,
+94% 38%,
+90% 43%,
+84% 46%,
+78% 43%,
+73% 38%,
+65% 38%,
+65% 100%,
+0 100%,
+0 68%,
+8% 68%,
+12% 63%,
+11% 57%,
+7% 52%,
+0 52%
+)",
+
+/* 4 — CENTER */
+"polygon(
+0 0,
+30% 0,
+30% 8%,
+24% 12%,
+22% 18%,
+25% 24%,
+31% 27%,
+37% 24%,
+41% 18%,
+41% 12%,
+47% 8%,
+53% 8%,
+59% 12%,
+59% 18%,
+63% 24%,
+69% 27%,
+75% 24%,
+78% 18%,
+76% 12%,
+70% 8%,
+70% 0,
+100% 0,
+100% 30%,
+92% 30%,
+88% 35%,
+89% 41%,
+94% 46%,
+94% 53%,
+89% 59%,
+83% 59%,
+78% 54%,
+76% 48%,
+76% 43%,
+70% 40%,
+70% 100%,
+30% 100%,
+30% 92%,
+35% 88%,
+41% 89%,
+46% 94%,
+53% 94%,
+59% 89%,
+59% 83%,
+54% 78%,
+48% 76%,
+43% 76%,
+40% 70%,
+0 70%,
+0 40%,
+8% 40%,
+12% 35%,
+11% 29%,
+7% 24%,
+0 24%
+)",
+
+/* 5 — MIDDLE RIGHT */
+"polygon(
+0 0,
+100% 0,
+100% 52%,
+92% 52%,
+88% 57%,
+89% 63%,
+94% 68%,
+94% 75%,
+89% 81%,
+83% 81%,
+78% 76%,
+76% 70%,
+70% 70%,
+70% 100%,
+0 100%,
+0 38%,
+7% 38%,
+12% 43%,
+18% 46%,
+24% 43%,
+29% 38%,
+35% 38%,
+35% 30%,
+29% 30%,
+24% 34%,
+18% 34%,
+12% 30%,
+10% 24%,
+12% 18%,
+18% 14%,
+24% 14%,
+29% 18%,
+35% 18%,
+35% 0
+)",
+
+/* 6 — BOTTOM LEFT */
+"polygon(
+0 0,
+65% 0,
+65% 30%,
+72% 30%,
+76% 24%,
+82% 22%,
+88% 25%,
+92% 31%,
+92% 38%,
+88% 43%,
+82% 46%,
+76% 43%,
+72% 38%,
+65% 38%,
+65% 70%,
+58% 70%,
+54% 76%,
+55% 82%,
+60% 87%,
+60% 94%,
+55% 100%,
+0 100%
+)",
+
+/* 7 — BOTTOM MIDDLE */
+"polygon(
+0 0,
+30% 0,
+30% 8%,
+35% 12%,
+41% 11%,
+46% 7%,
+53% 7%,
+59% 11%,
+59% 17%,
+54% 22%,
+48% 24%,
+43% 24%,
+40% 30%,
+70% 30%,
+70% 22%,
+76% 18%,
+82% 19%,
+87% 24%,
+94% 24%,
+100% 30%,
+100% 100%,
+70% 100%,
+70% 92%,
+65% 88%,
+59% 89%,
+54% 94%,
+48% 96%,
+42% 94%,
+38% 88%,
+32% 87%,
+27% 92%,
+27% 100%,
+0 100%
+)",
+
+/* 8 — BOTTOM RIGHT */
+"polygon(
+0 0,
+65% 0,
+65% 30%,
+72% 30%,
+76% 24%,
+82% 22%,
+88% 25%,
+92% 31%,
+92% 38%,
+88% 43%,
+82% 46%,
+76% 43%,
+72% 38%,
+65% 38%,
+65% 70%,
+58% 70%,
+54% 76%,
+55% 82%,
+60% 87%,
+60% 94%,
+55% 100%,
+0 100%,
+0 70%,
+8% 70%,
+12% 65%,
+11% 59%,
+7% 54%,
+0 54%
+)"
+
+];
+
+
+/* =========================================
+   LOAD PHOTO
+   ========================================= */
+
+function loadPhoto(){
+
+const img = new Image();
+
+img.onload=function(){
+
+console.log(
+"Photo loaded:",
+img.naturalWidth,
+img.naturalHeight
+);
+
+makePuzzle(img);
+
+};
+
+img.onerror=function(){
+
+loading.style.display="none";
+errorBox.style.display="block";
+
+};
+
+img.src =
+PHOTO_PATH+"?v="+Date.now();
+
+}
+
+
+/* =========================================
+   CREATE PUZZLE
+   ========================================= */
+
+function makePuzzle(img){
+
+pieces=[];
+
+for(let i=0;i<9;i++){
+
+pieces.push(i);
+
+}
+
+loading.style.display="none";
+
+puzzle.style.display="grid";
+statusText.style.display="block";
+shuffleBtn.style.display="inline-block";
+
+puzzle.style.setProperty(
+"--photo",
+`url("${img.src}")`
+);
+
+shufflePuzzle();
+
+}
+
+
+/* =========================================
+   RENDER
+   ========================================= */
+
+function renderPuzzle(){
+
+puzzle.innerHTML="";
+
+pieces.forEach((number,index)=>{
+
+const piece =
+document.createElement("div");
+
+piece.className="piece";
+
+const row=Math.floor(number/3);
+const col=number%3;
+
+piece.style.setProperty(
+"--pos",
+`${col*50}% ${row*50}%`
+);
+
+piece.style.setProperty(
+"--shape",
+shapes[number]
+);
+
+piece.dataset.index=index;
+
+piece.onclick=function(){
+
+selectPiece(piece);
+
+};
+
+puzzle.appendChild(piece);
+
+});
+
+}
+
+
+/* =========================================
+   SELECT / SWAP
+   ========================================= */
+
+function selectPiece(piece){
+
+if(!selected){
+
+selected=piece;
+
+piece.classList.add("selected");
+
+statusText.textContent=
+"Now tap another piece ✨";
+
+return;
+
+}
+
+if(selected===piece){
+
+piece.classList.remove("selected");
+
+selected=null;
+
+statusText.textContent=
+"Tap two pieces to swap 💕";
+
+return;
+
+}
+
+const first=
+Number(selected.dataset.index);
+
+const second=
+Number(piece.dataset.index);
+
+[
+pieces[first],
+pieces[second]
+]=[
+pieces[second],
+pieces[first]
+];
+
+selected=null;
+
+renderPuzzle();
+
+checkComplete();
+
+}
+
+
+/* =========================================
+   SHUFFLE
+   ========================================= */
+
+function shufflePuzzle(){
+
+do{
+
+for(let i=pieces.length-1;i>0;i--){
+
+const j=
+Math.floor(Math.random()*(i+1));
+
+[pieces[i],pieces[j]]
+=
+[pieces[j],pieces[i]];
+
+}
+
+}while(isComplete());
+
+selected=null;
+
+renderPuzzle();
+
+statusText.textContent=
+"Tap two pieces to swap 💕";
+
+}
+
+
+/* =========================================
+   COMPLETE
+   ========================================= */
+
+function isComplete(){
+
+return pieces.every(
+(value,index)=>value===index
+);
+
+}
+
+
+function checkComplete(){
+
+if(!isComplete()) return;
+
+puzzle.classList.add("complete");
+
+statusText.textContent=
+"✨ Memory completed! ✨";
+
+setTimeout(()=>{
+
+document.getElementById("game")
+.style.display="none";
+
+document.getElementById("giftScreen")
+.style.display="block";
+
+createHearts(30);
+
+},900);
+
+}
+
+
+/* =========================================
+   GIFT
+   ========================================= */
+
+function openGift(){
+
+document.querySelector(".gift")
+.textContent="💝";
+
+document.getElementById("message")
+.style.display="block";
+
+createHearts(45);
+
+}
+
+
+/* =========================================
+   HEARTS
+   ========================================= */
+
+function createHearts(count){
+
+for(let i=0;i<count;i++){
+
+const heart=
+document.createElement("div");
+
+heart.className="heart";
+
+heart.textContent=[
+"❤️",
+"💖",
+"💕",
+"💗",
+"✨"
+][Math.floor(Math.random()*5)];
+
+heart.style.left=
+Math.random()*100+"vw";
+
+heart.style.fontSize=
+(14+Math.random()*20)+"px";
+
+heart.style.animationDuration=
+(3+Math.random()*4)+"s";
+
+document.body.appendChild(heart);
+
+setTimeout(
+()=>heart.remove(),
+7500
+);
+
+}
+
+}
+
+
+/* START */
+
+loadPhoto();
+
+</script>
+
+</body>
+  </html>
